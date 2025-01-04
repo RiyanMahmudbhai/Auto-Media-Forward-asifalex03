@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import Application, MessageHandler, filters
 
 # Bot token from BotFather
-BOT_TOKEN = "YOUR_BOT_TOKEN"
+BOT_TOKEN = "8122656092:AAEmh5hWSYOo_Y9DCSD7rvDnvBvMGGogreM"
 
 # Source and destination channel IDs
 SOURCE_CHANNEL_ID = -1002100804603
