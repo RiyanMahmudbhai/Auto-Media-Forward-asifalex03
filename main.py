@@ -35,7 +35,7 @@ async def forward_video(update: Update, context):
         return
     
     # Check if it's a forwarded video
-    if message.forward_origin or message.forward_date:
+    if message.forward_date:
         logger.info("Forwarded message detected.")
     
     # Check for video
