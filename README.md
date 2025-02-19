@@ -1,125 +1,133 @@
-Here’s a summarized guide for deploying your bot on any VPS:
+\# Auto Forward Bot
 
----
+A simple Telegram bot that automatically forwards **video files** from a source channel to a destination channel. The bot is built using Python and the Telegram Bot API.
 
-### **Step-by-Step Guide: Deploy Auto Media Forward Bot**
+## Features
+- Forwards **only video files** from a **source channel** to a **destination channel**.
+- Handles **forwarded messages** properly.
+- Supports **media groups (albums).**
+- Uses logging for debugging and monitoring.
 
----
+## Repository
+GitHub Repo: [Auto-Media-Forward-asifalex03](https://github.com/RiyanMahmudbhai/Auto-Media-Forward-asifalex03)
 
-#### **1. Set Up the VPS**
-1. **Update the system**:
-   ```bash
-   sudo apt update && sudo apt upgrade -y
-   ```
-2. **Install Python and pip**:
-   ```bash
-   sudo apt install python3 python3-pip python3-venv -y
-   ```
+## Installation
 
----
-
-#### **2. Clone the Repository**
-1. **Install Git (if not already installed)**:
-   ```bash
-   sudo apt install git -y
-   ```
-2. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-repo/Auto-Media-Forward-Bot.git
-   ```
-3. **Navigate to the project directory**:
-   ```bash
-   cd Auto-Media-Forward-Bot
-   ```
-
----
-
-#### **3. Set Up a Virtual Environment**
-1. **Create and activate a virtual environment**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-2. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
----
-
-#### **4. Configure the Bot**
-1. **Create a `.env` file**:
-   ```bash
-   nano .env
-   ```
-2. **Add the following environment variables**:
-   ```env
-   API_HASH=your_api_hash
-   API_ID=your_api_id
-   BOT_TOKEN=your_bot_token
-   CHANNEL_ID=source_channel:destination_channel
-   AS_COPY=True  # Optional: Use True/False based on your requirements
-   ```
-3. **Save and exit**: Press `Ctrl + O`, then `Enter`, and `Ctrl + X`.
-
----
-
-#### **5. Test the Bot**
-1. **Run the bot manually to ensure it works**:
-   ```bash
-   python3 bot.py
-   ```
-2. **Verify that the bot forwards media messages as expected.
-
----
-
-#### **6. Set Up Persistent Running with `systemd`**
-1. **Create a `systemd` service file**:
-   ```bash
-   sudo nano /etc/systemd/system/media-forward-bot.service
-   ```
-2. **Add the following content**:
-   ```ini
-   [Unit]
-   Description=Telegram Media Forward Bot
-   After=network.target
-
-   [Service]
-   User=root
-   WorkingDirectory=/path/to/Auto-Media-Forward-Bot
-   ExecStart=/path/to/Auto-Media-Forward-Bot/venv/bin/python3 bot.py
-   Restart=always
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
-   Replace `/path/to/Auto-Media-Forward-Bot` with the actual path to the cloned repository.
-
-3. **Reload and start the service**:
-   ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable media-forward-bot
-   sudo systemctl start media-forward-bot
-   ```
-4. **Check the service status**:
-   ```bash
-   sudo systemctl status media-forward-bot
-   ```
-
----
-
-#### **7. Monitor Logs**
-To check the logs in real-time:
-```bash
-journalctl -u media-forward-bot.service -f
+### 1. Clone the Repository
+```sh
+git clone https://github.com/RiyanMahmudbhai/Auto-Media-Forward-asifalex03.git
+cd Auto-Media-Forward-asifalex03
 ```
 
----
+### 2. Install Dependencies
+```sh
+pip3 install -r requirements.txt
+```
 
-### **Final Notes**
-- The bot will now run persistently and restart automatically on crashes or system reboots.
-- For future deployments, just follow these steps and replace the environment variables with the appropriate values.
+### 3. Set Up Environment Variables
+Create a `.env` file and add your **Telegram Bot Token**:
+```sh
+nano .env
+```
+Add the following:
+```
+BOT_TOKEN=your-telegram-bot-token
+SOURCE_CHANNEL_ID=-100xxxxxxxxxx
+DESTINATION_CHANNEL_ID=-100xxxxxxxxxx
+```
+Save and exit (`CTRL+X`, then `Y`, then `ENTER`).
 
----
+### 4. Run the Bot
+```sh
+python3 main.py
+```
 
-Would you like me to save this note as a text file for easy access?
+## Deploy on a VPS
+### 1. Connect to VPS
+```sh
+ssh username@your-vps-ip
+```
+
+### 2. Update and Install Dependencies
+```sh
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3 python3-pip git -y
+```
+
+### 3. Clone the Repository on VPS
+```sh
+git clone https://github.com/RiyanMahmudbhai/Auto-Media-Forward-asifalex03.git
+cd Auto-Media-Forward-asifalex03
+pip3 install -r requirements.txt
+```
+
+### 4. Configure Environment Variables
+```sh
+nano .env
+```
+Add your bot token and channel IDs:
+```
+BOT_TOKEN=your-telegram-bot-token
+SOURCE_CHANNEL_ID=-100xxxxxxxxxx
+DESTINATION_CHANNEL_ID=-100xxxxxxxxxx
+```
+Save and exit.
+
+### 5. Run the Bot in the Background
+#### Option 1: Using `screen`
+```sh
+screen -S telegram-bot
+python3 main.py
+```
+To detach: `CTRL+A`, then `D`
+To reattach: `screen -r telegram-bot`
+
+#### Option 2: Using `systemd`
+```sh
+sudo nano /etc/systemd/system/telegram-bot.service
+```
+Paste the following:
+```
+[Unit]
+Description=Telegram Auto Forward Bot
+After=network.target
+
+[Service]
+WorkingDirectory=/home/username/Auto-Media-Forward-asifalex03
+ExecStart=/usr/bin/python3 main.py
+Restart=always
+User=username
+
+[Install]
+WantedBy=multi-user.target
+```
+Save and exit.
+
+Enable and start the service:
+```sh
+sudo systemctl daemon-reload
+sudo systemctl enable telegram-bot
+sudo systemctl start telegram-bot
+```
+Check status:
+```sh
+sudo systemctl status telegram-bot
+```
+
+## Usage
+- Add the bot to both **source** and **destination** channels as an **admin**.
+- The bot will **automatically forward video messages** from the **source channel** to the **destination channel**.
+- You can monitor logs to see activity:
+```sh
+tail -f bot.log  # If using nohup logging
+```
+
+## License
+MIT License
+
+## Contributions
+Feel free to submit pull requests or open issues.
+
+## Contact
+For any questions, reach out to Telegram - @asifalex03
+
