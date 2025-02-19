@@ -1,4 +1,4 @@
-\# Auto Forward Bot
+# Auto Forward Bot
 
 A simple Telegram bot that automatically forwards **video files** from a source channel to a destination channel. The bot is built using Python and the Telegram Bot API.
 
@@ -84,7 +84,7 @@ To reattach: `screen -r telegram-bot`
 
 #### Option 2: Using `systemd`
 ```sh
-sudo nano /etc/systemd/system/telegram-bot.service
+sudo nano /etc/systemd/system/telegram-bot2.service
 ```
 Paste the following:
 ```
@@ -94,7 +94,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/home/username/Auto-Media-Forward-asifalex03
-ExecStart=/usr/bin/python3 main.py
+ExecStart=/usr/bin/python3 main.py # Running second instance
 Restart=always
 User=username
 
@@ -129,5 +129,5 @@ MIT License
 Feel free to submit pull requests or open issues.
 
 ## Contact
-For any questions, reach out to Telegram - @asifalex03
+For any questions, reach out to [your-email@example.com]
 
