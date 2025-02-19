@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 async def forward_video(update: Update, context):
     """Forward only video files from source to destination channel."""
-    message = update.message
+    message = update.message or update.channel_post  # Handle both message types
     
     if not message:
         logger.info("No message found in the update.")
@@ -33,6 +33,10 @@ async def forward_video(update: Update, context):
     if message.chat.id != SOURCE_CHANNEL_ID:
         logger.info("Message is not from the source channel.")
         return
+    
+    # Check if it's a forwarded video
+    if message.forward_origin or message.forward_date:
+        logger.info("Forwarded message detected.")
     
     # Check for video
     if message.video:
