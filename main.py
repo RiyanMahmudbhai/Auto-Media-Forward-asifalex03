@@ -22,8 +22,8 @@ async def forward_video(update: Update, context):
     """Forward only video files from source to destination channel."""
     message = update.message
     
-    # Check if the message is from the source channel and contains a video
-    if message.chat.id == SOURCE_CHANNEL_ID and message.video:
+    # Ensure message exists and contains a video before processing
+    if message and message.chat and message.video and message.chat.id == SOURCE_CHANNEL_ID:
         await message.forward(chat_id=DESTINATION_CHANNEL_ID)
 
 
