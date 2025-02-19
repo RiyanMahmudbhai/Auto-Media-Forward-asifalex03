@@ -23,17 +23,25 @@ async def forward_video(update: Update, context):
     """Forward only video files from source to destination channel."""
     message = update.message
     
-    if message:
-        logger.info(f"Received a message from chat ID: {message.chat.id}")
+    if not message:
+        logger.info("No message found in the update.")
+        return
     
-    # Ensure message exists and contains a video before processing
-    if message and message.chat and message.video:
-        if message.chat.id == SOURCE_CHANNEL_ID:
-            logger.info("Video detected, forwarding...")
-            await message.forward(chat_id=DESTINATION_CHANNEL_ID)
-            logger.info("Video forwarded successfully!")
-        else:
-            logger.info("Message is not from the source channel.")
+    logger.info(f"Received a message from chat ID: {message.chat.id}")
+    
+    # Check if message is from the source channel
+    if message.chat.id != SOURCE_CHANNEL_ID:
+        logger.info("Message is not from the source channel.")
+        return
+    
+    # Check for video
+    if message.video:
+        logger.info("Video detected, forwarding...")
+        await message.forward(chat_id=DESTINATION_CHANNEL_ID)
+        logger.info("Video forwarded successfully!")
+    elif message.media_group_id:
+        logger.info("Media group detected, forwarding all media...")
+        await message.forward(chat_id=DESTINATION_CHANNEL_ID)
     else:
         logger.info("No video found in the message.")
 
@@ -42,8 +50,8 @@ def main():
     # Initialize the bot application
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Add a handler for messages containing video files only
-    video_handler = MessageHandler(filters.VIDEO, forward_video)
+    # Add a handler for messages containing media files
+    video_handler = MessageHandler(filters.ALL, forward_video)
     application.add_handler(video_handler)
 
     # Start the bot
