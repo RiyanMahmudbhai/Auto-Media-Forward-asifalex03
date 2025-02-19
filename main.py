@@ -17,14 +17,25 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+logger = logging.getLogger(__name__)
 
 async def forward_video(update: Update, context):
     """Forward only video files from source to destination channel."""
     message = update.message
     
+    if message:
+        logger.info(f"Received a message from chat ID: {message.chat.id}")
+    
     # Ensure message exists and contains a video before processing
-    if message and message.chat and message.video and message.chat.id == SOURCE_CHANNEL_ID:
-        await message.forward(chat_id=DESTINATION_CHANNEL_ID)
+    if message and message.chat and message.video:
+        if message.chat.id == SOURCE_CHANNEL_ID:
+            logger.info("Video detected, forwarding...")
+            await message.forward(chat_id=DESTINATION_CHANNEL_ID)
+            logger.info("Video forwarded successfully!")
+        else:
+            logger.info("Message is not from the source channel.")
+    else:
+        logger.info("No video found in the message.")
 
 
 def main():
