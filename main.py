@@ -1,4 +1,8 @@
-import os import logging from dotenv import load\_dotenv from telegram import Update from telegram.ext import Application, MessageHandler, filters
+import os
+import logging
+from dotenv import load_dotenv
+from telegram import Update
+from telegram.ext import Application, MessageHandler, filters
 
 # Load environment variables
 
