@@ -6,7 +6,8 @@ from telegram.ext import Application, MessageHandler, filters
 
 # Load environment variables
 
-load\_dotenv() BOT\_TOKEN = os.getenv("BOT\_TOKEN")
+load_dotenv()
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Source and destination channel IDs
 
