@@ -84,7 +84,7 @@ To reattach: `screen -r telegram-bot`
 
 #### Option 2: Using `systemd`
 ```sh
-sudo nano /etc/systemd/system/telegram-bot2.service
+sudo nano /etc/systemd/system/telegram-bot22.service
 ```
 Paste the following:
 ```
@@ -93,25 +93,26 @@ Description=Telegram Auto Forward Bot
 After=network.target
 
 [Service]
-WorkingDirectory=/home/username/Auto-Media-Forward-asifalex03
-ExecStart=/usr/bin/python3 main.py # Running second instance
+WorkingDirectory=/root/Auto-Media-Forward-asifalex03
+ExecStart=/usr/bin/python3 /root/Auto-Media-Forward-asifalex03/main.py
 Restart=always
-User=username
+User=root
 
 [Install]
 WantedBy=multi-user.target
+
 ```
 Save and exit.
 
 Enable and start the service:
 ```sh
 sudo systemctl daemon-reload
-sudo systemctl enable telegram-bot
-sudo systemctl start telegram-bot
+sudo systemctl enable telegram-bot22
+sudo systemctl start telegram-bot22
 ```
 Check status:
 ```sh
-sudo systemctl status telegram-bot
+sudo systemctl status telegram-bot22
 ```
 
 ## Usage
