@@ -130,5 +130,5 @@ MIT License
 Feel free to submit pull requests or open issues.
 
 ## Contact
-For any questions, reach out to [your-email@example.com]
+For any questions, reach out to Telegram - @asifalex2
 
