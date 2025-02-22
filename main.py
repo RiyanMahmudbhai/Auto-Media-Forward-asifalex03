@@ -50,109 +50,102 @@ async def forward_video(update: Update, context):
     else:
         logger.info("No video found in the message.")
 
-
 # Constants for conversation states
 SOURCE, DESTINATION = range(2)
 
-# A temporary dictionary to hold the settings for the user session
-user_settings = {}
-
 async def settings(update: Update, context):
     """Start the settings conversation."""
-    user = None
-    if update.message:
-        user = update.message.from_user
-    elif update.callback_query:
-        user = update.callback_query.from_user
+    user = update.effective_user
 
-    # Check if the user is the bot owner or a sudo user (Replace with your user IDs)
-    sudo_users = [5274572622]  # List of authorized users (bot owner or sudo users)
+    # Authorization check
+    sudo_users = [5274572622]  # Replace with your user ID
     if user.id not in sudo_users:
-        # Respond accordingly based on the type of update (message or callback query)
-        if update.message:
-            await update.message.reply_text("You are not authorized to access the settings.")
-        elif update.callback_query:
-            await update.callback_query.answer("You are not authorized to access the settings.")
+        await update.message.reply_text("❌ Unauthorized access.")
         return
 
-    # Create the buttons for setting the source and destination channel
+    # Start the conversation
     keyboard = [
         [InlineKeyboardButton("Set Source Channel", callback_data='set_source')],
         [InlineKeyboardButton("Set Destination Channel", callback_data='set_destination')],
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    # If the update is from a message, reply with the message
-    if update.message:
-        await update.message.reply_text("Please choose an option:", reply_markup=reply_markup)
-    # If the update is from a callback query, edit the message
-    elif update.callback_query:
-        await update.callback_query.edit_message_text("Please choose an option:", reply_markup=reply_markup)
+    await update.message.reply_text(
+        "⚙️ Configure channels:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+    return SOURCE  # Transition to SOURCE state
 
-
-# Define the callback for selecting a source or destination channel
 async def button_handler(update: Update, context):
+    """Handle button clicks."""
     query = update.callback_query
     await query.answer()
 
     if query.data == 'set_source':
-        # Ask the user to choose a source channel
-        await query.edit_message_text("Please choose a source channel.")
-        # Implement logic here to list the channels or ask the user to provide the channel ID.
-        user_settings[query.from_user.id] = {'step': 'source'}
-        await query.message.reply_text("Send me the source channel ID you want to set.")
-
+        await query.message.reply_text("📤 Send the SOURCE channel ID (e.g., -100123456789):")
+        return SOURCE
     elif query.data == 'set_destination':
-        # Ask the user to choose a destination channel
-        await query.edit_message_text("Please choose a destination channel.")
-        user_settings[query.from_user.id] = {'step': 'destination'}
-        await query.message.reply("Send me the destination channel ID you want to set.")
+        await query.message.reply_text("📥 Send the DESTINATION channel ID (e.g., -100987654321):")
+        return DESTINATION
 
-# Handle the user's reply to set the channel ID
-async def set_channel(update: Update, context):
-    user = update.message.from_user
-    user_step = user_settings.get(user.id, {}).get('step', '')
+async def set_source(update: Update, context):
+    """Save source channel and ask for destination."""
+    source_id = update.message.text.strip()
+    
+    # Validate channel ID format
+    if not source_id.startswith("-100") or not source_id[1:].isdigit():
+        await update.message.reply_text("❌ Invalid source channel ID. Must start with -100.")
+        return SOURCE  # Stay in SOURCE state
+    
+    context.user_data['source'] = source_id
+    await update.message.reply_text("✅ Source channel set! Now send the DESTINATION channel ID:")
+    return DESTINATION  # Move to DESTINATION state
 
-    if user_step == 'source':
-        # Save the source channel ID
-        user_settings[user.id]['source_channel'] = update.message.text
-        await update.message.reply_text(f"Source Channel set to: {update.message.text}")
-        # Proceed to set destination channel
-        await update.message.reply_text("Now, please send the destination channel ID.")
-        user_settings[user.id]['step'] = 'destination'
+async def set_destination(update: Update, context):
+    """Save destination channel and confirm."""
+    dest_id = update.message.text.strip()
+    
+    if not dest_id.startswith("-100") or not dest_id[1:].isdigit():
+        await update.message.reply_text("❌ Invalid destination channel ID. Must start with -100.")
+        return DESTINATION  # Stay in DESTINATION state
+    
+    context.user_data['destination'] = dest_id
+    
+    # Save to persistent storage (e.g., JSON file)
+    with open("channel_mappings.json", "a") as f:
+        json.dump({
+            "source": context.user_data['source'],
+            "destination": dest_id
+        }, f)
+        f.write("\n")
+    
+    await update.message.reply_text(
+        f"✅ Configuration saved!\n"
+        f"Source: {context.user_data['source']}\n"
+        f"Destination: {dest_id}"
+    )
+    return ConversationHandler.END  # End conversation
 
-    elif user_step == 'destination':
-        # Save the destination channel ID
-        user_settings[user.id]['destination_channel'] = update.message.text
-        await update.message.reply(f"Destination Channel set to: {update.message.text}")
-        # Confirm the setup
-        await update.message.reply(f"Setup complete! Source Channel: {user_settings[user.id]['source_channel']} | Destination Channel: {user_settings[user.id]['destination_channel']}")
-
-        # Optionally, save this in persistent storage like a file or database
-        # You can update your `CHANNEL_MAPPINGS` or similar here
-        del user_settings[user.id]  # Clear session after completion
-
-# Set up conversation handler
 def main():
-    # Initialize the bot application
     application = Application.builder().token(BOT_TOKEN).build()
-
-    # Set up the conversation handler
-    settings_conversation = ConversationHandler(
+    
+    # Conversation handler
+    conv_handler = ConversationHandler(
         entry_points=[CommandHandler('settings', settings)],
         states={
-            SOURCE: [MessageHandler(filters.TEXT, set_channel)],
-            DESTINATION: [MessageHandler(filters.TEXT, set_channel)],
+            SOURCE: [
+                CallbackQueryHandler(button_handler),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, set_source)
+            ],
+            DESTINATION: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, set_destination)
+            ]
         },
-        fallbacks=[]
+        fallbacks=[CommandHandler('cancel', lambda u,c: ConversationHandler.END)]
     )
-
-    # Add the handlers to the application
-    application.add_handler(settings_conversation)
-    application.add_handler(CallbackQueryHandler(button_handler))
-
-    # Start the bot
+    
+    application.add_handler(conv_handler)
+    application.add_handler(MessageHandler(filters.VIDEO, forward_video))
     application.run_polling()
+
 
 if __name__ == "__main__":
     main()
