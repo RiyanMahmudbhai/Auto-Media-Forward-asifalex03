@@ -8,9 +8,12 @@ from telegram.ext import Application, MessageHandler, filters
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# Source and destination channel IDs
-SOURCE_CHANNEL_ID = -1002100804603
-DESTINATION_CHANNEL_ID = -1002334248978
+# Source and destination channel mappings
+CHANNEL_MAPPINGS = {
+    "-1002386644256": ["-1002484982348"],  # Example source to destination
+    "-1002261820786": ["-1001821077777"],  # Another source to destination
+    # Add more mappings as needed
+}
 
 # Enable logging
 logging.basicConfig(
@@ -20,7 +23,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def forward_video(update: Update, context):
-    """Forward only video files from source to destination channel without source channel name, keeping only the caption."""
+    """Forward only video files from source to destination channels without source channel name, keeping only the caption."""
     message = update.message or update.channel_post  # Handle both message types
     
     if not message:
@@ -29,21 +32,25 @@ async def forward_video(update: Update, context):
     
     logger.info(f"Received a message from chat ID: {message.chat.id}")
     
-    # Check if message is from the source channel
-    if message.chat.id != SOURCE_CHANNEL_ID:
-        logger.info("Message is not from the source channel.")
+    # Check if message is from a valid source channel
+    source_channel = str(message.chat.id)  # Convert to string for easy matching
+    if source_channel not in CHANNEL_MAPPINGS:
+        logger.info("Message is not from a valid source channel.")
         return
     
     # Check for video
     if message.video:
         logger.info("Video detected, forwarding without source channel name...")
         caption = message.caption if message.caption else ""  # Preserve the caption only
-        await context.bot.send_video(
-            chat_id=DESTINATION_CHANNEL_ID,
-            video=message.video.file_id,
-            caption=caption
-        )
-        logger.info("Video forwarded successfully!")
+        
+        # Loop through all the destination channels for this source channel
+        for destination_channel in CHANNEL_MAPPINGS[source_channel]:
+            await context.bot.send_video(
+                chat_id=destination_channel,
+                video=message.video.file_id,
+                caption=caption
+            )
+            logger.info(f"Video forwarded to channel {destination_channel} successfully!")
     else:
         logger.info("No video found in the message.")
 
