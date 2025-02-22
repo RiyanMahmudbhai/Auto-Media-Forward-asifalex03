@@ -1,11 +1,10 @@
 import os
 import logging
 from dotenv import load_dotenv
-from telegram import Update
+from telegram import Update, Request
 from telegram.ext import Application, MessageHandler, filters
 from telegram.error import TimedOut, NetworkError
 import asyncio
-from telegram.ext import Request
 
 # Load environment variables
 load_dotenv()
