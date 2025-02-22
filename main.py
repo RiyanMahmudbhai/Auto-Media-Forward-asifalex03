@@ -70,7 +70,7 @@ async def settings(update: Update, context):
     if user.id not in sudo_users:
         # Respond accordingly based on the type of update (message or callback query)
         if update.message:
-            await update.message.reply("You are not authorized to access the settings.")
+            await update.message.reply_text("You are not authorized to access the settings.")
         elif update.callback_query:
             await update.callback_query.answer("You are not authorized to access the settings.")
         return
@@ -84,7 +84,7 @@ async def settings(update: Update, context):
     
     # If the update is from a message, reply with the message
     if update.message:
-        await update.message.reply("Please choose an option:", reply_markup=reply_markup)
+        await update.message.reply_text("Please choose an option:", reply_markup=reply_markup)
     # If the update is from a callback query, edit the message
     elif update.callback_query:
         await update.callback_query.edit_message_text("Please choose an option:", reply_markup=reply_markup)
@@ -100,7 +100,7 @@ async def button_handler(update: Update, context):
         await query.edit_message_text("Please choose a source channel.")
         # Implement logic here to list the channels or ask the user to provide the channel ID.
         user_settings[query.from_user.id] = {'step': 'source'}
-        await query.message.reply("Send me the source channel ID you want to set.")
+        await query.message.reply_text("Send me the source channel ID you want to set.")
 
     elif query.data == 'set_destination':
         # Ask the user to choose a destination channel
@@ -116,9 +116,9 @@ async def set_channel(update: Update, context):
     if user_step == 'source':
         # Save the source channel ID
         user_settings[user.id]['source_channel'] = update.message.text
-        await update.message.reply(f"Source Channel set to: {update.message.text}")
+        await update.message.reply_text(f"Source Channel set to: {update.message.text}")
         # Proceed to set destination channel
-        await update.message.reply("Now, please send the destination channel ID.")
+        await update.message.reply_text("Now, please send the destination channel ID.")
         user_settings[user.id]['step'] = 'destination'
 
     elif user_step == 'destination':
