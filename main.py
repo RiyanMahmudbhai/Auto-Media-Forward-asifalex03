@@ -10,10 +10,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Source and destination channel mappings
 CHANNEL_MAPPINGS = {
-    "-1002261820786": ["-1002255696539"],  #Leech From SoloVault---
-Index Files Database 
-    "-1002418710282": ["-1002292610792"],  #Leech Logs For {@NSFWVault_bot} File Store---
-NSFW Vault Prv8 
+    "-1002261820786": ["-1002255696539"],  #Leech From SoloVault---Index Files Database 
+    "-1002418710282": ["-1002292610792"],  #Leech Logs For {@NSFWVault_bot} File Store---NSFW Vault Prv8 
     "-1002211636314": ["-1001617154743"], 
     # Add more mappings as needed
 }
