@@ -5,6 +5,7 @@ from telegram import Update
 from telegram.ext import Application, MessageHandler, filters
 from telegram.error import TimedOut, NetworkError
 import asyncio
+from telegram.ext import Request
 
 # Load environment variables
 load_dotenv()
@@ -82,10 +83,8 @@ async def send_video_with_retry(context, destination_channel, video_file_id, cap
 def main():
     """Main function to start the bot."""
     # Initialize the bot application with a request timeout
-    application = Application.builder().token(BOT_TOKEN).build()
-
-    # Set a timeout globally (adjust the value as needed)
-    application.bot._request.timeout = 60  # Timeout in seconds
+    request = Request(connect_timeout=60, read_timeout=60)  # Set timeout globally here
+    application = Application.builder().token(BOT_TOKEN).request(request).build()
 
     # Add a handler for messages containing video files only
     video_handler = MessageHandler(filters.VIDEO, forward_video)
