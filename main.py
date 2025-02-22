@@ -65,14 +65,12 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start settings conversation."""
     user = update.effective_user
 
-    # Authorization check
     if user.id not in [5274572622]:  # Replace with your ID
         await update.message.reply_text("❌ Unauthorized.")
         return ConversationHandler.END
 
-    # Check if already in a conversation
     if context.user_data.get('in_conversation'):
-        await update.message.reply_text("⚠️ Finish current setup first!")
+        await update.message.reply_text("⚠️ Complete the current setup or /cancel first!")
         return ConversationHandler.END
 
     context.user_data['in_conversation'] = True
@@ -88,15 +86,15 @@ async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return SOURCE
 
 async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Process button clicks."""
+    """Handle button clicks."""
     query = update.callback_query
     await query.answer()
 
     if query.data == 'set_source':
-        await query.message.reply_text("📤 Send SOURCE channel ID (e.g., -10012345678):")
+        await query.edit_message_text("📤 Send SOURCE channel ID (e.g., -10012345678):")
         return SOURCE
     elif query.data == 'set_dest':
-        await query.message.reply_text("📥 Send DESTINATION channel ID (e.g., -10087654321):")
+        await query.edit_message_text("📥 Send DESTINATION channel ID (e.g., -10087654321):")
         return DESTINATION
 
 async def set_source(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -104,22 +102,23 @@ async def set_source(update: Update, context: ContextTypes.DEFAULT_TYPE):
     source_id = update.message.text.strip()
     
     if not source_id.startswith("-100") or not source_id[1:].isdigit():
-        await update.message.reply_text("❌ Invalid source ID. Must start with -100.")
-        return SOURCE  # Retry
+        await update.message.reply_text("❌ Invalid source ID. Must start with -100. Try again:")
+        return SOURCE  # Stay in SOURCE state
     
     context.user_data['source'] = source_id
-    await update.message.reply_text("✅ Source saved! Now send DESTINATION:")
-    return DESTINATION  # Move to next state
+    await update.message.reply_text(
+        "✅ Source saved! Now send the DESTINATION channel ID.\n"
+        "To cancel, use /cancel."
+    )
+    return DESTINATION  # Move to DESTINATION state
 
 async def set_destination(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Save destination channel."""
     dest_id = update.message.text.strip()
     
     if not dest_id.startswith("-100") or not dest_id[1:].isdigit():
-        await update.message.reply_text("❌ Invalid destination ID. Must start with -100.")
-        return DESTINATION  # Retry
-    
-    context.user_data['destination'] = dest_id
+        await update.message.reply_text("❌ Invalid destination ID. Must start with -100. Try again:")
+        return DESTINATION  # Stay in DESTINATION state
     
     # Save to persistent storage (e.g., JSON/database)
     with open("channels.json", "a") as f:
@@ -130,12 +129,11 @@ async def set_destination(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Source: {context.user_data['source']}\n"
         f"Destination: {dest_id}"
     )
-    # Cleanup
-    context.user_data.clear()
-    return ConversationHandler.END
+    context.user_data.clear()  # Clear session data
+    return ConversationHandler.END  # Exit conversation
 
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Cancel ongoing configuration."""
+    """Cancel the current configuration."""
     context.user_data.clear()
     await update.message.reply_text("❌ Configuration canceled.")
     return ConversationHandler.END
@@ -156,10 +154,11 @@ def main():
             ]
         },
         fallbacks=[CommandHandler('cancel', cancel)],
-        allow_reentry=False  # Prevent multiple /settings during setup
+        allow_reentry=False  # Block new /settings during active setup
     )
     
     app.add_handler(conv_handler)
+    app.add_handler(MessageHandler(filters.VIDEO, forward_video))
     app.run_polling()
 
 if __name__ == "__main__":
