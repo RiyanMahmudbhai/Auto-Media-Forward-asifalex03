@@ -62,8 +62,7 @@ async def send_video_with_retry(context, destination_channel, video_file_id, cap
             await context.bot.send_video(
                 chat_id=destination_channel,
                 video=video_file_id,
-                caption=caption,
-                timeout=60  # Set a longer timeout for large videos
+                caption=caption
             )
             logger.info(f"Video successfully forwarded to channel {destination_channel}.")
             break  # Exit loop if successful
@@ -82,8 +81,11 @@ async def send_video_with_retry(context, destination_channel, video_file_id, cap
 
 def main():
     """Main function to start the bot."""
-    # Initialize the bot application
+    # Initialize the bot application with a request timeout
     application = Application.builder().token(BOT_TOKEN).build()
+
+    # Set a timeout globally (adjust the value as needed)
+    application.bot._request.timeout = 60  # Timeout in seconds
 
     # Add a handler for messages containing video files only
     video_handler = MessageHandler(filters.VIDEO, forward_video)
