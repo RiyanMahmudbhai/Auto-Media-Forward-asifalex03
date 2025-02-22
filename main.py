@@ -3,7 +3,6 @@ import logging
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, MessageHandler, filters
-from telegram.request import Request  # Correct import here
 from telegram.error import TimedOut, NetworkError
 import asyncio
 
@@ -82,9 +81,11 @@ async def send_video_with_retry(context, destination_channel, video_file_id, cap
 
 def main():
     """Main function to start the bot."""
-    # Initialize the bot application with a request timeout
-    request = Request(connect_timeout=60, read_timeout=60)  # Set timeout globally here
-    application = Application.builder().token(BOT_TOKEN).request(request).build()
+    # Initialize the bot application with a timeout
+    application = Application.builder().token(BOT_TOKEN).build()
+
+    # Set a global timeout for requests
+    application.bot.set_options(timeout=60)  # Set timeout globally here (60 seconds)
 
     # Add a handler for messages containing video files only
     video_handler = MessageHandler(filters.VIDEO, forward_video)
