@@ -81,11 +81,11 @@ async def send_video_with_retry(context, destination_channel, video_file_id, cap
 
 def main():
     """Main function to start the bot."""
-    # Initialize the bot application with a timeout
+    # Initialize the bot application with a request timeout
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Set a global timeout for requests
-    application.bot.set_options(timeout=60)  # Set timeout globally here (60 seconds)
+    # Set a global timeout for requests when initializing the application
+    application.bot._request.timeout = 60  # Set timeout globally here (60 seconds)
 
     # Add a handler for messages containing video files only
     video_handler = MessageHandler(filters.VIDEO, forward_video)
