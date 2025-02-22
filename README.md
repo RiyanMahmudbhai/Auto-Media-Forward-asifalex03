@@ -32,8 +32,16 @@ nano .env
 Add the following:
 ```
 BOT_TOKEN=your-telegram-bot-token
-SOURCE_CHANNEL_ID=-100xxxxxxxxxx
-DESTINATION_CHANNEL_ID=-100xxxxxxxxxx
+```
+Example:
+You can now easily add more mappings in CHANNEL_MAPPINGS as needed:
+
+```
+CHANNEL_MAPPINGS = {
+    "-1002100804603": ["-1002334248978", "-1002484982348"],  # Source to two destinations
+    "-1002386644256": ["-1002484982348"],  # Another source to a single destination
+    # Add more mappings as needed
+}
 ```
 Save and exit (`CTRL+X`, then `Y`, then `ENTER`).
 
