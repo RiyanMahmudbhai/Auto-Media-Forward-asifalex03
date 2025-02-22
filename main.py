@@ -59,12 +59,17 @@ user_settings = {}
 
 async def settings(update: Update, context):
     """Start the settings conversation."""
-    user = update.message.from_user
+    user = update.message.from_user if update.message else update.callback_query.from_user
 
     # Check if the user is the bot owner or a sudo user (Replace with your user IDs)
     sudo_users = [123456789]  # List of authorized users (bot owner or sudo users)
     if user.id not in sudo_users:
-        await update.message.reply("You are not authorized to access the settings.")
+        # If the update is from a message
+        if update.message:
+            await update.message.reply("You are not authorized to access the settings.")
+        # If the update is from a callback query
+        elif update.callback_query:
+            await update.callback_query.answer("You are not authorized to access the settings.")
         return
 
     # Create the buttons for setting the source and destination channel
@@ -73,7 +78,14 @@ async def settings(update: Update, context):
         [InlineKeyboardButton("Set Destination Channel", callback_data='set_destination')],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply("Please choose an option:", reply_markup=reply_markup)
+    
+    # If the update is from a message, reply with the message
+    if update.message:
+        await update.message.reply("Please choose an option:", reply_markup=reply_markup)
+    # If the update is from a callback query, edit the message
+    elif update.callback_query:
+        await update.callback_query.edit_message_text("Please choose an option:", reply_markup=reply_markup)
+
 
 # Define the callback for selecting a source or destination channel
 async def button_handler(update: Update, context):
