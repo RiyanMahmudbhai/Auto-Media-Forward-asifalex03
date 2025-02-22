@@ -2,10 +2,18 @@ import os
 import logging
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import Application, MessageHandler, filters
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler, ConversationHandler
-
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    MessageHandler,
+    filters,
+    ConversationHandler,
+    ContextTypes,
+)
 
 # Load environment variables
 load_dotenv()
@@ -50,103 +58,109 @@ async def forward_video(update: Update, context):
     else:
         logger.info("No video found in the message.")
 
-# Constants for conversation states
+# States
 SOURCE, DESTINATION = range(2)
 
-async def settings(update: Update, context):
-    """Start the settings conversation."""
+async def settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Start settings conversation."""
     user = update.effective_user
 
     # Authorization check
-    sudo_users = [5274572622]  # Replace with your user ID
-    if user.id not in sudo_users:
-        await update.message.reply_text("❌ Unauthorized access.")
-        return
+    if user.id not in [5274572622]:  # Replace with your ID
+        await update.message.reply_text("❌ Unauthorized.")
+        return ConversationHandler.END
 
-    # Start the conversation
+    # Check if already in a conversation
+    if context.user_data.get('in_conversation'):
+        await update.message.reply_text("⚠️ Finish current setup first!")
+        return ConversationHandler.END
+
+    context.user_data['in_conversation'] = True
+
     keyboard = [
-        [InlineKeyboardButton("Set Source Channel", callback_data='set_source')],
-        [InlineKeyboardButton("Set Destination Channel", callback_data='set_destination')],
+        [InlineKeyboardButton("Set Source", callback_data='set_source'),
+         InlineKeyboardButton("Set Destination", callback_data='set_dest')]
     ]
     await update.message.reply_text(
-        "⚙️ Configure channels:",
+        "⚙️ Choose action:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
-    return SOURCE  # Transition to SOURCE state
+    return SOURCE
 
-async def button_handler(update: Update, context):
-    """Handle button clicks."""
+async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Process button clicks."""
     query = update.callback_query
     await query.answer()
 
     if query.data == 'set_source':
-        await query.message.reply_text("📤 Send the SOURCE channel ID (e.g., -100123456789):")
+        await query.message.reply_text("📤 Send SOURCE channel ID (e.g., -10012345678):")
         return SOURCE
-    elif query.data == 'set_destination':
-        await query.message.reply_text("📥 Send the DESTINATION channel ID (e.g., -100987654321):")
+    elif query.data == 'set_dest':
+        await query.message.reply_text("📥 Send DESTINATION channel ID (e.g., -10087654321):")
         return DESTINATION
 
-async def set_source(update: Update, context):
-    """Save source channel and ask for destination."""
+async def set_source(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Save source channel."""
     source_id = update.message.text.strip()
     
-    # Validate channel ID format
     if not source_id.startswith("-100") or not source_id[1:].isdigit():
-        await update.message.reply_text("❌ Invalid source channel ID. Must start with -100.")
-        return SOURCE  # Stay in SOURCE state
+        await update.message.reply_text("❌ Invalid source ID. Must start with -100.")
+        return SOURCE  # Retry
     
     context.user_data['source'] = source_id
-    await update.message.reply_text("✅ Source channel set! Now send the DESTINATION channel ID:")
-    return DESTINATION  # Move to DESTINATION state
+    await update.message.reply_text("✅ Source saved! Now send DESTINATION:")
+    return DESTINATION  # Move to next state
 
-async def set_destination(update: Update, context):
-    """Save destination channel and confirm."""
+async def set_destination(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Save destination channel."""
     dest_id = update.message.text.strip()
     
     if not dest_id.startswith("-100") or not dest_id[1:].isdigit():
-        await update.message.reply_text("❌ Invalid destination channel ID. Must start with -100.")
-        return DESTINATION  # Stay in DESTINATION state
+        await update.message.reply_text("❌ Invalid destination ID. Must start with -100.")
+        return DESTINATION  # Retry
     
     context.user_data['destination'] = dest_id
     
-    # Save to persistent storage (e.g., JSON file)
-    with open("channel_mappings.json", "a") as f:
-        json.dump({
-            "source": context.user_data['source'],
-            "destination": dest_id
-        }, f)
-        f.write("\n")
+    # Save to persistent storage (e.g., JSON/database)
+    with open("channels.json", "a") as f:
+        f.write(f"{context.user_data['source']} -> {dest_id}\n")
     
     await update.message.reply_text(
-        f"✅ Configuration saved!\n"
+        f"✅ Setup complete!\n"
         f"Source: {context.user_data['source']}\n"
         f"Destination: {dest_id}"
     )
-    return ConversationHandler.END  # End conversation
+    # Cleanup
+    context.user_data.clear()
+    return ConversationHandler.END
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Cancel ongoing configuration."""
+    context.user_data.clear()
+    await update.message.reply_text("❌ Configuration canceled.")
+    return ConversationHandler.END
 
 def main():
-    application = Application.builder().token(BOT_TOKEN).build()
+    app = Application.builder().token(BOT_TOKEN).build()
     
     # Conversation handler
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('settings', settings)],
         states={
             SOURCE: [
-                CallbackQueryHandler(button_handler),
+                CallbackQueryHandler(handle_button),
                 MessageHandler(filters.TEXT & ~filters.COMMAND, set_source)
             ],
             DESTINATION: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, set_destination)
             ]
         },
-        fallbacks=[CommandHandler('cancel', lambda u,c: ConversationHandler.END)]
+        fallbacks=[CommandHandler('cancel', cancel)],
+        allow_reentry=False  # Prevent multiple /settings during setup
     )
     
-    application.add_handler(conv_handler)
-    application.add_handler(MessageHandler(filters.VIDEO, forward_video))
-    application.run_polling()
-
+    app.add_handler(conv_handler)
+    app.run_polling()
 
 if __name__ == "__main__":
     main()
-
