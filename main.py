@@ -59,7 +59,7 @@ user_settings = {}
 
 async def settings(update: Update, context):
     """Start the settings conversation."""
-    # Check if the update comes from a message or callback_query
+    user = None
     if update.message:
         user = update.message.from_user
     elif update.callback_query:
