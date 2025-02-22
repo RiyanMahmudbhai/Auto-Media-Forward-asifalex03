@@ -59,15 +59,18 @@ user_settings = {}
 
 async def settings(update: Update, context):
     """Start the settings conversation."""
-    user = update.message.from_user if update.message else update.callback_query.from_user
+    # Check if the update comes from a message or callback_query
+    if update.message:
+        user = update.message.from_user
+    elif update.callback_query:
+        user = update.callback_query.from_user
 
     # Check if the user is the bot owner or a sudo user (Replace with your user IDs)
-    sudo_users = [123456789]  # List of authorized users (bot owner or sudo users)
+    sudo_users = [5274572622]  # List of authorized users (bot owner or sudo users)
     if user.id not in sudo_users:
-        # If the update is from a message
+        # Respond accordingly based on the type of update (message or callback query)
         if update.message:
             await update.message.reply("You are not authorized to access the settings.")
-        # If the update is from a callback query
         elif update.callback_query:
             await update.callback_query.answer("You are not authorized to access the settings.")
         return
@@ -85,7 +88,6 @@ async def settings(update: Update, context):
     # If the update is from a callback query, edit the message
     elif update.callback_query:
         await update.callback_query.edit_message_text("Please choose an option:", reply_markup=reply_markup)
-
 
 # Define the callback for selecting a source or destination channel
 async def button_handler(update: Update, context):
